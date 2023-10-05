@@ -1,7 +1,8 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
-from database import Base
-from pydantic import BaseModel
+from sqlalchemy.ext.declarative import declarative_base
+from .database import Base
+
 
 
 Base =  declarative_base()
@@ -12,6 +13,7 @@ class BaseMixin:
 
 class Student(Base):
     __tablename__ = "student"
+    __abstract__ = True
     age = Column(Integer, index=True)
     address = Column(Text, index=True)
     gender_id = Column(Integer, ForeignKey("gender_id"))
@@ -27,6 +29,7 @@ class Student(Base):
 
 class Parent(Base):
     __tablename__ = "parent"
+    __abstract__ = True
     age = Column(Integer, index=True)
     gender_id = Column(Integer, ForeignKey("gender_id"))
     email = Column(String, unique=True, index=True)
@@ -37,6 +40,7 @@ class Parent(Base):
 
 class Emergency(Base):
     __tablename__ = "emergency" 
+    __abstract__ = True
     phone = Column(String, index=True)
 
 
@@ -52,15 +56,17 @@ class MedicalCondition(Base):
 
 class Program(Base):
     __tablename__ = "program"
+    __abstract__ = True
     description = Column(String, index=True)
 
 
 class Class(Base):
     __tablename__ = "class"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
+    __abstract__ = True
     description = Column(String, index=True)
     program_id = Column(Integer, ForeignKey("program_id"))
+    class_teacher_id = Column(Integer, ForeignKey("staff.id"))
+    assistant_teacher_id = Column(Integer, ForeignKey("staff.id"))
 
     students = relationship("Student", secondary="class_student_association", back_populates="classes")
     class_teacher = relationship("Staff", foreign_keys=[class_teacher_id], back_populates="classes_taught")
@@ -77,16 +83,15 @@ class ClassStudentAssociation(Base):
 
 class Staff(Base):
     __tablename__ = "staff"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
+    __abstract__ = True
     age = Column(Integer, index=True)
     gender_id = Column(Integer, ForeignKey("gender_id"))
     email = Column(String, unique=True, index=True)
     phone = Column(String, index=True)
     password = Column(String, index=True)
     hashedpassword = Column(String)
-    department = Column(Integer, ForeignKey("teacher_id"))
-    role = Column(Integer, ForeignKey("teacher_id"))
+    department_id = Column(Integer, ForeignKey("department_id"))
+    role_id = Column(Integer, ForeignKey("teacher_id"))
 
     department = relationship("Department", foreign_keys=[department_id], back_populates="staff_members")
     staff_roles = relationship("Role", back_populates="staff_members")

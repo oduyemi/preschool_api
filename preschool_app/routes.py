@@ -1,10 +1,33 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request, status
+from sqlalchemy.orm import Session
 from preschool_app import starter
-from preschool_app.database import get_db
+from .models import Student
 
 
+router = APIRouter()
 
-@starter.get("/")
-async def index():
-    pass
+students = []
+
+@router.get("/")
+async def get_index():
     return{"message": "Welcome to Preschool API"}
+
+@starter.get("/students")
+def get_students():
+    pass 
+    return {"message": "students data"}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
