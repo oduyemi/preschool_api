@@ -1,5 +1,5 @@
-# preschool_api
- API that maintains the records of all students in a private Daycare center. Powered by Python FastAPI
+# Pre-School API Documentation
+Welcome to the Pre-School API documentation! This API maintains the records of all students in a private Daycare center.
 
 ### Powered by Python FastAPI, achieving database independence with SQLAlchemy
 
