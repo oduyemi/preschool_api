@@ -6,40 +6,66 @@ from preschool_app.dependencies import get_db
 from preschool_app.authourize import decode_token, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Optional
+from preschool_app.models import Program, Class, Student, Admission
 
 preschool_router = APIRouter()
 
-def authenticate_user(username: str, password: str) -> Optional[dict]:
-    users_db = {
-        "user1": {"username": "user1", "password": "password1"},
-        "user2": {"username": "user2", "password": "password2"},
-    }
 
-    user = users_db.get(username)
-    if user and user["password"] == password:
-        return {"sub": username}
 
-    return None
+#     --   G E T   R E Q U E S T S   --
 
 @starter.get("/")
 async def get_index():
     return {"message": "Welcome to Preschool API"}
 
-@starter.post("/token")
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+@starter.get("/programs")
+async def get_programs():
+    programs = db.query(Program).all()
+    return programs
 
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(data={"sub": form_data.username}, expires_delta=access_token_expires)
-    return {"access_token": access_token, "token_type": "bearer"}
+@starter.get("/program/program_id")
+async def get_program(program_id: int, db: Session = Depends(get_db)):
+    program = db.query(Program).filter(Program.id == program_id).first()
+    if program is None:
+        raise HTTPException(status_code=404, detail="Program not available!")
+    return program
 
-@starter.get("/secure-data")
-async def secure_data(current_user: dict = Depends(decode_token), db: Session = Depends(get_db)):
-    # Use the db session as needed
-    return {"message": "This is secure data!", "current_user": current_user}
+@starter.get("/classes")
+async def get_classes():
+    classes = db.query(Class).all()
+    return classes
+
+@starter.get("/class/class_id")
+async def get_class():
+    student_class = db.query(Class).filter(Class.id == class_id).first()
+    if student_class is None:
+        raise HTTPException(status_code=404, detail="Class not available!")
+    return student_class
+
+@starter.get("/students")
+async def get_students():
+    students = db.query(Student).all()
+    return students
+
+@starter.get("/student/student_id")
+async def get_student():
+    student = db.query(Student).filter(Student.id == student_id).first()
+    if student is None:
+        raise HTTPException(status_code=404, detail="Student not available!")
+    return student
+
+#     --   G E T   R E Q U E S T S   --
+
+@starter.post("/admission")
+async def create_admission(student_id: int, program_id: int):
+    new_admission = Admission(student_id=student_id, program_id=program_id)
+    new_admission.generate_student_number()
+
+    if student_id and program_id:
+        session.add(new_admission)
+        session.commit()
+        return {"message": "Admission created successfully"}
+    else:
+        raise HTTPException(status_code=400, detail="Invalid input")
+
+

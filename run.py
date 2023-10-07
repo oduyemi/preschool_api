@@ -1,6 +1,6 @@
 import os
-from sqlalchemy.orm import sessionmaker
-from preschool_app import starter, engine, Base, models
+from preschool_app import starter, engine, models
+from preschool_app.models import Base
 from instance.config import SECRET_KEY, DATABASE_URI
 from dotenv import load_dotenv
 from sqlalchemy import inspect
@@ -17,8 +17,8 @@ Base.metadata.create_all(bind = engine)
 
 print("Tables created")
 
+from sqlalchemy.orm import sessionmaker
 Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 
 with Session() as session:
     inspector = inspect(engine)
@@ -31,6 +31,3 @@ if __name__ == "__main__":
     import uvicorn
     
     uvicorn.run("filmhouse_app.starter:starter", host="0.0.0.0", port=8000, reload=True)
-
-
-
