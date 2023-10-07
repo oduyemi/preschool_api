@@ -1,18 +1,19 @@
-print("Executing models.py")
-
 from datetime import datetime
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime, CheckConstraint
 from sqlalchemy.orm import relationship, sessionmaker, registry
 from sqlalchemy.ext.declarative import declarative_base
 from preschool_app import Base, engine
+from pydantic import BaseModel
+
 
 Session = sessionmaker(bind=engine)
 session = Session()
 
-# mapper_registry = registry()
-# mapper_registry.configure()
+mapper_registry = registry()
+mapper_registry.configure()
 
 Base = declarative_base()
+
 
 
 class Program(Base):
@@ -23,21 +24,25 @@ class Program(Base):
 
     classes = relationship("Class", back_populates="program")
 
+
 class Emergency(Base):
     __tablename__ = "emergency" 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(length=200), index=True)
     phone = Column(String(length=80), index=True)
 
+
 class Gender(Base):
     __tablename__ = "gender"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(length=200), index=True)
 
+
 class MedicalCondition(Base):
     __tablename__ = "medical"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(length=200), index=True)
+
 
 class Department(Base):
     __tablename__ = "department"  
@@ -46,12 +51,13 @@ class Department(Base):
 
     staff_members = relationship("Staff", back_populates="department")
 
+
 class Role(Base):
     __tablename__ = "role"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(length=200), index=True)
+    staff_id = Column(Integer, ForeignKey("staff.id"), nullable = True) 
 
-    staff_members = relationship("Staff", back_populates="role")
 
 
 class Staff(Base):
@@ -70,8 +76,6 @@ class Staff(Base):
     image = Column(String(length=120), index=True)
 
     department = relationship("Department", back_populates="staff_members")
-    role = relationship("Role", back_populates="staff_members")
-
     teacher = relationship("Teacher", back_populates="staff")
 
 
@@ -91,11 +95,11 @@ class TeacherClassAssociation(Base):
     teacher_id = Column(Integer, ForeignKey("teacher.id"), primary_key=True)
     class_id = Column(Integer, ForeignKey("class.id"), primary_key=True)
 
+
 class Class(Base):
     __tablename__ = "class"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(length=200), index=True)
-    description = Column(Text, index=True)
     program_id = Column(Integer, ForeignKey("program.id"))
     class_teacher_id = Column(Integer, ForeignKey("teacher.id"))
     assistant_teacher_id = Column(Integer, ForeignKey("teacher.id"))
@@ -122,10 +126,6 @@ class Student(Base):
 
     student_class = relationship("Class", secondary="class_student_association", back_populates="class_student")
     class_deets = relationship("Class", back_populates="students")
-    
-
-    # class_teacher = relationship("Teacher", foreign_keys=[class_teacher_id], back_populates="students_taught")
-    # assistant_teacher = relationship("Teacher", foreign_keys=[assistant_teacher_id], back_populates="students_assisted")
 
 
 class ClassStudentAssociation(Base):
