@@ -14,4 +14,5 @@ Base: DeclarativeMeta = declarative_base()
 
 
 from preschool_app import routes
-starter.include_router(routes.router)
+starter.include_router(routes.preschool_router)
+
