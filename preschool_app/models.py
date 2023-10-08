@@ -85,9 +85,10 @@ class Teacher(Base):
     staff_id = Column(Integer, ForeignKey("staff.id"))
 
     staff = relationship("Staff", back_populates="teacher")
-    class_taught = relationship("Class", secondary="teacher_class_association", back_populates="class_teacher")
-    class_assisted = relationship("Class", secondary="teacher_class_association", back_populates="assistant_teacher")
-    classes_taught = relationship("Class", secondary="teacher_class_association")
+    class_taught = relationship("Class", secondary="teacher_class_association", back_populates="class_teacher", overlaps='classes_taught')
+    classes_taught = relationship("Class", secondary="teacher_class_association", overlaps='class_taught')
+    class_assisted = relationship("Class", secondary="teacher_class_association", back_populates="assistant_teacher", overlaps='class_taught,classes_taught')
+
 
 
 class TeacherClassAssociation(Base):
@@ -101,14 +102,14 @@ class Class(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(length=200), index=True)
     program_id = Column(Integer, ForeignKey("program.id"))
-    class_teacher_id = Column(Integer, ForeignKey("teacher.id"))
-    assistant_teacher_id = Column(Integer, ForeignKey("teacher.id"))
+    class_teacher_id = Column(Integer, ForeignKey("teacher.id"), nullable=True)
+    assistant_teacher_id = Column(Integer, ForeignKey("teacher.id"), nullable=True)
 
     program = relationship("Program", back_populates="classes")
-    class_student = relationship("Student", secondary="class_student_association", back_populates="student_class")
     students = relationship("Student", back_populates="class_deets")
-    class_teacher = relationship("Teacher", secondary="teacher_class_association", back_populates="class_taught")
-    assistant_teacher = relationship("Teacher", secondary="teacher_class_association", back_populates="class_assisted")
+    class_student = relationship("Student", secondary="class_student_association", back_populates="student_class", viewonly=True)
+    class_teacher = relationship("Teacher", secondary="teacher_class_association", back_populates="class_taught", overlaps='assistant_teacher', viewonly=True)
+    assistant_teacher = relationship("Teacher", secondary="teacher_class_association", back_populates="class_assisted", overlaps='class_teacher', viewonly=True)
 
 
 class Student(Base):
@@ -124,7 +125,7 @@ class Student(Base):
     is_disable = Column(Boolean, default=False, index=True)
     image = Column(String(length=120), index=True)
 
-    student_class = relationship("Class", secondary="class_student_association", back_populates="class_student")
+    student_class = relationship("Class", secondary="class_student_association", back_populates="class_student", viewonly=True)
     class_deets = relationship("Class", back_populates="students")
 
 
@@ -146,7 +147,7 @@ class Admission(Base):
 
     def generate_student_number(self):
         year = str(datetime.utcnow().year)[-2:]
-        program_identifiers = {1: "AA", 2: "BB", 3: "CC", 4: "DD", 5: "EE", 6: "FF"} 
+        program_identifiers = {1: "TL", 2: "SF", 3: "SM", 4: "DD", 5: "EE", 6: "FF"} 
         program_identifier = program_identifiers.get(str(self.program_id), "XX")
         student_id = str(self.student_id).zfill(3)
 

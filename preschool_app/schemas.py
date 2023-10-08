@@ -13,12 +13,13 @@ class ProgramResponse(BaseModel):
 class ClassRequest(BaseModel):
     name: str
     program_id: int
-    class_teacher_id: int
-    assistant_teacher_id: int
+    class_teacher_id: Optional[int]
+    assistant_teacher_id: Optional[int]
 
 class ClassResponse(BaseModel):
     id: int
     name: str
+    program: List[str]
 
 
 class StudentRequest(BaseModel):
@@ -34,6 +35,31 @@ class StudentRequest(BaseModel):
     image: str
 
 class StudentResponse(BaseModel):
+    id: int
+    name: str
+    description: str
+    age: int
+    address: str
+    gender_id: int
+    class_id: int
+    emergency_contact_id: int
+    medical_condition_id: int
+    is_disable: str
+    image: str
+
+class StaffRequest(BaseModel):
+    name: str
+    description: str
+    age: int
+    address: str
+    gender_id: int
+    class_id: int
+    emergency_contact_id: int
+    medical_condition_id: int
+    is_disable: str
+    image: str
+
+class StaffResponse(BaseModel):
     id: int
     name: str
     description: str
@@ -102,7 +128,8 @@ class RoleRequest(BaseModel):
 class RoleResponse(BaseModel):
     id: int
     name: str
-    staff_id: Optional[List[Dict[str, Union[int, str]]]]
+    staff: List[Dict[str, Union[int, str]]]
+    staff_id: Optional[int]
 
 class GenderRequest(BaseModel):
     name: str
