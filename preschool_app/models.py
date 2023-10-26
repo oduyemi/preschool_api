@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime, CheckConstraint
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime, CheckConstraint, Float, func
 from sqlalchemy.orm import relationship, sessionmaker, registry
 from sqlalchemy.ext.declarative import declarative_base
 from preschool_app import Base, engine
@@ -38,10 +38,22 @@ class Gender(Base):
     name = Column(String(length=200), index=True)
 
 
+class MedicalCategory(Base):
+    __tablename__ = "medical_category"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(length=200), index=True)
+
+    conditions = relationship("MedicalCondition", back_populates="medical_category")
+
 class MedicalCondition(Base):
     __tablename__ = "medical"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(length=200), index=True)
+    medical_category_id = Column(Integer, ForeignKey("medical_category.id"))
+
+    medical_category = relationship("MedicalCategory", back_populates="conditions")
+
+
 
 
 class Department(Base):
@@ -77,6 +89,14 @@ class Staff(Base):
 
     department = relationship("Department", back_populates="staff_members")
     teacher = relationship("Teacher", back_populates="staff")
+    medical_conditions = relationship("MedicalCondition", secondary="staff_medical_condition_association")
+    schedule = relationship("Schedule", back_populates="staff")
+
+
+class StaffMedicalConditionAssociation(Base):
+    __tablename__ = "staff_medical_condition_association"
+    staff_id = Column(Integer, ForeignKey("staff.id"), primary_key=True)
+    medical_condition_id = Column(Integer, ForeignKey("medical.id"), primary_key=True)
 
 
 class Teacher(Base):
@@ -127,6 +147,15 @@ class Student(Base):
 
     student_class = relationship("Class", secondary="class_student_association", back_populates="class_student", viewonly=True)
     class_deets = relationship("Class", back_populates="students")
+    medical_conditions = relationship("MedicalCondition", secondary="student_medical_condition_association")
+    bills = relationship("Billing", back_populates="student")
+    payments = relationship("Payment", back_populates="student", foreign_keys="[Payment.student_id]")
+
+
+
+Student.attendance = relationship("Attendance", back_populates="student")
+Student.daily_activities = relationship("DailyActivity", back_populates="student", order_by="desc(DailyActivity.date)")
+
 
 
 class ClassStudentAssociation(Base):
@@ -136,6 +165,12 @@ class ClassStudentAssociation(Base):
 
 Student.classes = relationship("Class", secondary="class_student_association", back_populates="students")
 Class.students = relationship("Student", secondary="class_student_association", back_populates="classes")
+
+class StudentMedicalConditionAssociation(Base):
+    __tablename__ = "student_medical_condition_association"
+    student_id = Column(Integer, ForeignKey("student.id"), primary_key=True)
+    medical_condition_id = Column(Integer, ForeignKey("medical.id"), primary_key=True)
+
 
 class Admission(Base):
     __tablename__ = "admission"
@@ -165,5 +200,59 @@ class Parent(Base):
     password = Column(String(length=100), index=True)
     hashedpassword = Column(String(length=100), index=True)
 
+class Attendance(Base):
+    __tablename__ = "attendance"
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(DateTime, default=datetime.utcnow, index=True)
+    student_id = Column(Integer, ForeignKey("student.id"))
+    status = Column(String(length=10), default="absent", index=True)  # "present" or "absent"
+
+    student = relationship("Student", back_populates="attendance")
 
 
+class DailyActivity(Base):
+    __tablename__ = "daily_activity"
+    id = Column(Integer, primary_key=True, index=True)
+    date = Column(DateTime, default=datetime.utcnow, index=True)
+    description = Column(String(length=200), index=True)
+    notes = Column(Text, nullable=True)
+    student_id = Column(Integer, ForeignKey("student.id"))
+
+    student = relationship("Student", back_populates="daily_activities")
+
+
+class Billing(Base):
+    __tablename__ = "billing"
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("student.id"))
+    amount = Column(Float, index=True)
+    due_date = Column(DateTime, index=True)
+    status = Column(String(length=20), default="pending", index=True)  # "paid", "pending", "overdue"
+
+    student = relationship("Student", back_populates="bills")
+    payments = relationship("Payment", back_populates="bill")  
+
+class Payment(Base):
+    __tablename__ = "payment"
+    id = Column(Integer, primary_key=True, index=True)
+    bill_id = Column(Integer, ForeignKey("billing.id"))
+    payment_date = Column(DateTime, default=func.now(), index=True)
+    amount_paid = Column(Float, index=True)
+    payment_method = Column(String(length=20), index=True)  # "credit_card", "bank_transfer", etc.
+
+    student_id = Column(Integer, ForeignKey("student.id"))
+    student = relationship("Student", back_populates="payments", primaryjoin="Payment.student_id == Student.id")
+
+    bill = relationship("Billing", back_populates="payments")
+
+
+
+class Schedule(Base):
+    __tablename__ = "schedule"
+    id = Column(Integer, primary_key=True, index=True)
+    staff_id = Column(Integer, ForeignKey("staff.id"))
+    day_of_week = Column(String(length=20), index=True)
+    start_time = Column(DateTime)
+    end_time = Column(DateTime)
+
+    staff = relationship("Staff", back_populates="schedule")

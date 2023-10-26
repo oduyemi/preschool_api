@@ -22,3 +22,5 @@ def decode_token(token: str):
         return payload
     except JWTError:
         return None
+
+        
